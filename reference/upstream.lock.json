@@ -1,0 +1,38 @@
+{
+  "repository": "https://github.com/KaedeharaKazuha1029/elaina-skill",
+  "commit": "b940fe08dec019807644f5bf5497d6299cf77ef6",
+  "prepared_date": "2026-10-12",
+  "full_corpus_bundled": false,
+  "files": {
+    "assets/openclaw-workspace/IDENTITY.md": {
+      "bytes": 733,
+      "git_blob_sha1": "08796fe7382b3a0130ac1dccc738399bc3c11727",
+      "sha256": "640b8fd244d2c558591fd772bd6366bb16c74a2dc8cd9d0f0eb5ec953edd2e1d"
+    },
+    "assets/openclaw-workspace/PERSONA_ELAINA.md": {
+      "bytes": 7258,
+      "git_blob_sha1": "6d614eec6fd5020e11e5aa20db19a6820b1b7a90",
+      "sha256": "0d623e49dd91432aa5df452474f86532ab2551384038825dc4696ef6b71564fd"
+    },
+    "assets/openclaw-workspace/RUNTIME_GUARD.md": {
+      "bytes": 1619,
+      "git_blob_sha1": "25d43ff3367924695cd43771a41ae3a5d57e4afb",
+      "sha256": "2d53e518d1f6841538b25e3379cc29bef7a6fd6969f7c348c788d324cf7c5abc"
+    },
+    "assets/openclaw-workspace/SOUL.md": {
+      "bytes": 1885,
+      "git_blob_sha1": "c818f3e7e5c90af704eeb09234f519364425bdf2",
+      "sha256": "2667570084d08848ee036f6a68910f912d9ece6510d366184d2f7275556182e4"
+    },
+    "references/retrieval-protocol.md": {
+      "bytes": 4528,
+      "git_blob_sha1": "f9875bde47148f1c39620602cbcc616b0fa921b1",
+      "sha256": "2c13fe9f0fb67dba67db5bd0e090af943873e386ff994dc724dc04540e4760d7"
+    },
+    "scripts/retrieve_memory.py": {
+      "bytes": 5540,
+      "git_blob_sha1": "061a7893b13b0d50f069de4c0c521d78d0a6a056",
+      "sha256": "95fc6d04ed50688991f9ab45e35241e7309d0e6c836a91801df384104bc501b3"
+    }
+  }
+}
