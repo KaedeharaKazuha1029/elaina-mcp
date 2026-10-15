@@ -10,13 +10,13 @@
 
 ## 准备获授权的语料
 
-在本地准备与锁定提交匹配的 elaina-skill 工作目录。`prepare-corpus.py` 会审查原文、摘要、SQLite 记录及完整覆盖情况，生成只有哈希/路径的清单与含私有语料的导入批次。
+仓库已包含完整 `src/corpus-manifest.json`，对应锁定提交的 601 个文件和 960 条索引记录，运行路由与导入器默认直接使用它。在本地准备与锁定提交匹配的 elaina-skill 工作目录。`prepare-corpus.py` 会审查原文、摘要、SQLite 记录及完整覆盖情况，生成只有哈希/路径的清单与含私有语料的导入批次。
 
 ```sh
 python scripts/prepare-corpus.py --root /absolute/path/to/elaina-skill --out /absolute/path/outside-public-repository/private-corpus
 ```
 
-将生成的 manifest.json 作为已被 Git 忽略的 `src/corpus-manifest.json`。公开仓库仅携带空模板 `src/corpus-manifest.example.json`，不携带具体语料路径、哈希或存储键。导入数据批次始终保留在公开仓库以外；原文、摘要、SQLite 及私人记忆不能变成公开静态资源。
+对于锁定提交，生成的 manifest.json 应与仓库中 `src/corpus-manifest.json` 逐字节一致；变更语料版本时重新核验清单、代码和数据库。导入数据批次始终保留在公开仓库以外；原文、摘要、SQLite 及私人记忆不能变成公开静态资源。
 
 ## 临时导入窗口
 
@@ -38,7 +38,7 @@ export async function PUT(request: Request) { return handleCorpusImport(request,
 
 最后，服务校验全部 D1 记录哈希及全部文件验证状态；成功后写入完成凭据，并封闭同版本的导入。elaina_status 只有在凭据、数量和版本一致时报告 corpus_ready=true。
 
-MCP 运行路由 `app/mcp/route.ts` 同样从私有 `src/corpus-manifest.json` 导入 manifest，并将它传给 `createCorpusStore({db: env.DB, bucket: env.BUCKET, manifest})`。该参数把证据验证与完整性状态固定到本次导入的清单；默认空模板始终报告未就绪。
+MCP 运行路由 `app/mcp/route.ts` 的 `createCorpusStore({db: env.DB, bucket: env.BUCKET})` 默认使用仓库中完整清单。显式传入 manifest 参数可使用另一个已核验版本；数据库或文件未完成导入时仍报告未就绪。
 
 ## 收尾与连接
 

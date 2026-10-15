@@ -1,4 +1,4 @@
-import manifestTemplate from './corpus-manifest.example.json' with {type:'json'};
+import manifestTemplate from './corpus-manifest.json' with {type:'json'};
 const encoder=new TextEncoder();
 async function sha256(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');}
 const error=(message)=>{throw Object.assign(Error(message),{code:'corpus_error'});};

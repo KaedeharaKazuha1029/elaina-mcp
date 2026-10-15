@@ -68,5 +68,3 @@ next-env.d.ts
 *.key
 __pycache__/
 
-# Deployment-specific corpus metadata
-/src/corpus-manifest.json

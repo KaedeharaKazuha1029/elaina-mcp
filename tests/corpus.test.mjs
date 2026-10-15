@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync,readdirSync} from 'node:fs';
 import {join} from 'node:path';
-import manifestTemplate from '../src/corpus-manifest.example.json' with {type:'json'};
+import manifestTemplate from '../src/corpus-manifest.json' with {type:'json'};
 import {createCorpusImporter} from '../src/corpus-import.mjs';
 const manifest=process.env.ELAINA_PRIVATE_EXPORT?JSON.parse(readFileSync(join(process.env.ELAINA_PRIVATE_EXPORT,'manifest.json'),'utf8')):manifestTemplate;
 const handleCorpusImport=createCorpusImporter(manifest);

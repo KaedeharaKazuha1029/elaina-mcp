@@ -1,6 +1,6 @@
 // Temporary provisioning route. Not an MCP tool. Requires both the private
 // Sites service boundary and a short-lived server-side import secret.
-import manifestTemplate from './corpus-manifest.example.json' with {type:'json'};
+import manifestTemplate from './corpus-manifest.json' with {type:'json'};
 export async function sha256(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(n=>n.toString(16).padStart(2,'0')).join('');}
 export function createCorpusImporter(manifest=manifestTemplate){
 const fileMap=new Map(manifest.files.map(f=>[f.path,f]));
