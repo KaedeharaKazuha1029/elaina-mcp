@@ -55,14 +55,9 @@ next-env.d.ts
 /outputs/
 /work/
 
-# Private corpus and credentials (never publish)
+# Private corpus staging and credentials (never publish)
 /private-corpus/
 /private-export/
-/小说/
-/文章概括/
-/memory/
-*.sqlite3
-*.sqlite3-*
 *.db
 *.db-*
 *.key
