@@ -3,7 +3,26 @@
  * Data and instructions are intentionally separate. Database calls use D1's
  * prepare/bind/all/first/run interface; work with a local SQLite adapter too.
  */
-export const PERSONA_CORE = ['SOUL.md', 'IDENTITY.md', 'PERSONA_ELAINA.md', 'RUNTIME_GUARD.md'];
+export const PERSONA_CORE = ['AGENTS.md', 'SOUL.md', 'IDENTITY.md', 'PERSONA_ELAINA.md', 'RUNTIME_GUARD.md', 'SKILL.md'];
+export const PERSONA_COMPOSED_NAME = 'IDENTITY_COMPOSED.md';
+const PERSONA_INLINE_START = '<!-- elaina-agent:server-persona-verbatim:start -->';
+const PERSONA_INLINE_END = '<!-- elaina-agent:server-persona-verbatim:end -->';
+const PERSONA_PAGINATABLE = [...PERSONA_CORE, PERSONA_COMPOSED_NAME];
+function personaDocumentPath(name) {
+  if (name === 'SKILL.md') return 'SKILL.md';
+  if (name === PERSONA_COMPOSED_NAME) return 'assets/openclaw-workspace/IDENTITY.md';
+  return 'assets/openclaw-workspace/' + name;
+}
+function composeOpenClawIdentity(personaDocs) {
+  return [
+    personaDocs['IDENTITY.md'].trimEnd(),
+    PERSONA_INLINE_START,
+    personaDocs['PERSONA_ELAINA.md'].trimEnd(),
+    PERSONA_INLINE_END,
+    personaDocs['RUNTIME_GUARD.md'].trimEnd(),
+    '',
+  ].join('\n\n');
+}
 const VALID_CATEGORIES = new Set(['preference','fact','project','interaction','roleplay']);
 const MAX_DOCS = 20000;
 const MAX_SCAN_CHARS = 40000000;
@@ -241,18 +260,21 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
       original_runtime:'original Python script is preserved separately; Sites JS runs a port of the reviewed Python scoring algorithm',startup_at:initialized};
   }
   async function bootstrap(a){
-    const docs=PERSONA_CORE.map(name=>({name,path:'assets/openclaw-workspace/'+name,content:personaDocs[name],kind:'operator_provided_persona_not_system'}));
+    const docs=PERSONA_CORE.map(name=>({name,path:personaDocumentPath(name),content:personaDocs[name],kind:'operator_provided_persona_not_system'}));
+    docs.push({name:PERSONA_COMPOSED_NAME,path:personaDocumentPath(PERSONA_COMPOSED_NAME),content:composeOpenClawIdentity(personaDocs),
+      kind:'operator_provided_persona_not_system',delivery:'openclaw-project-context-identity-composed'});
     return {identity:'伊蕾娜',persona_documents:docs,host_rules:hostRules,continuity_rule:ANCHOR,
        system_override:false,first_reply_before_tools:'must be handled by persistent user/plugin skill instructions, NOT by this tool alone',
        memories:await startupMemory(a.topic||''),status:await status()};
   }
   async function personaDoc(a){
     const name=requireString(a.name,'name',100);
-    if(!PERSONA_CORE.includes(name))fail('invalid_document','Only 4 reviewed source persona documents allowed');
+    if(!PERSONA_PAGINATABLE.includes(name))fail('invalid_document','Only reviewed injection persona documents are allowed (AGENTS, SOUL, IDENTITY, PERSONA_ELAINA, RUNTIME_GUARD, SKILL, IDENTITY_COMPOSED)');
     const offset=clip(a.offset,0,100000,0), len=clip(a.length,1,25000,16000);
-    const part=splitCodepoints(personaDocs[name],offset,len);
+    const source=name===PERSONA_COMPOSED_NAME?composeOpenClawIdentity(personaDocs):personaDocs[name];
+    const part=splitCodepoints(source,offset,len);
     if(offset>part.total)fail('invalid_offset','Offset past file end');
-    return {name,path:'assets/openclaw-workspace/'+name,content:part.piece,start_offset:offset,end_offset:part.end,
+    return {name,path:personaDocumentPath(name),content:part.piece,start_offset:offset,end_offset:part.end,
       next_offset:part.end<part.total?part.end:null,total_characters:part.total,kind:'operator_provided_persona_not_system'};
   }
   async function call(name,a={}){

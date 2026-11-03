@@ -13,4 +13,4 @@ export function testDB() {
   seed(sql){db.exec(sql)},close(){db.close()}
  };
 }
-export const docs=Object.fromEntries(['SOUL.md','IDENTITY.md','PERSONA_ELAINA.md','RUNTIME_GUARD.md'].map(x=>[x,'verified example text '+x]));
+export const docs=Object.fromEntries(['AGENTS.md','SOUL.md','IDENTITY.md','PERSONA_ELAINA.md','RUNTIME_GUARD.md','SKILL.md'].map(x=>[x,'verified example text '+x]));
