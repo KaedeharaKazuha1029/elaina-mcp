@@ -20,6 +20,4 @@ included in this distribution. Synthetic test text is not novel canon.
 
 Provide the corresponding source of your deployed modified version to remote
 users in accordance with the accompanying license. Dependencies retain their
-own licenses. Repository licensing does not itself establish rights to unrelated
-novel text, characters, or other third-party material; operators are responsible
-for their source material and deployment permissions.
+own licenses.
