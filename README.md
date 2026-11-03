@@ -41,7 +41,6 @@
 - 无状态 HTTP JSON-RPC MCP，入口 `POST /mcp`。
 - 原 Python 排名逻辑移植至 JavaScript，并进行差分验证；Python 代码另行保留，不声称 Workers 执行 Python。
 
-人格指令受宿主规则约束；MCP 本身不会永久修改 ChatGPT 的系统指令，也无法撤回已生成的回复。
 
 ## 快速检查
 
@@ -76,4 +75,4 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 
 ## 许可证
 
-MCP 适配实现及沿用的上游代码按 **AGPL-3.0-only** 发布；完整许可证见 [LICENSE](LICENSE)，来源说明见 [reference/NOTICE.md](reference/NOTICE.md)。依赖与保留模板适用各自许可证。软件许可证不授权第三方小说正文或角色素材的再分发。
+MCP 适配实现及沿用的上游代码按 **AGPL-3.0-only** 发布；完整许可证见 [LICENSE](LICENSE)，来源说明见 [reference/NOTICE.md](reference/NOTICE.md)。依赖与保留模板适用各自许可证。
