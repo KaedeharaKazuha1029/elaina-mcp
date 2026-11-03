@@ -5,7 +5,7 @@
 - [ ] Site 通过拥有者登录，站点可见范围仅为我自己；未授权访问 /mcp 必须返回 401/403，而不是任何私人数据库查询结果。
 - [ ] Sites 中配置了真实的持久 SQL 数据库，不依赖重启即丢失的临时内存。
 - [ ] MCP initialize/tools/list 返回 12 个工具及正确的读写标注。
-- [ ] `bootstrap_elaina` 返回 SOUL、IDENTITY、PERSONA_ELAINA、RUNTIME_GUARD 全文，未截断。
+- [ ] `bootstrap_elaina` 返回 AGENTS、SOUL、IDENTITY、PERSONA_ELAINA、RUNTIME_GUARD、完整 SKILL.md 与 IDENTITY_COMPOSED，未截断。
 - [ ] `elaina_status` 返回真实正典数据库文档数量；若没导入原文则准确为 false。
 - [ ] 私有语料导入后 `search_canon`、`search_original`、`read_evidence` 返回互相一致的路径、文档 ID、出处与正文证据。
 - [ ] 记忆的新增→查询→修改→删除成功；数据持久化后 Site 重新发布、数据库重新连接，内容仍在（删除后应不再可见）。

@@ -8,8 +8,11 @@ test('upstream Python scoring rough parity on snippets',()=>{
  assert.equal(scoreCanon('unfound','title','content'),0);
  assert.equal(scoreCanon('旅人','旅行者','旅人',{'旅行者':['旅人']}),168);
 });
-test('bootstrap includes all four full persona files and Site continuity warning',async()=>{
- const {engine,db}=make();let d=await engine.call('bootstrap_elaina',{});assert.equal(d.persona_documents.length,4);
+test('bootstrap includes full skill injection set and Site continuity warning',async()=>{
+ const {engine,db}=make();let d=await engine.call('bootstrap_elaina',{});assert.equal(d.persona_documents.length,7);
+ assert.ok(d.persona_documents.some(x=>x.name==='AGENTS.md'));
+ assert.ok(d.persona_documents.some(x=>x.name==='SKILL.md'));
+ assert.ok(d.persona_documents.some(x=>x.name==='IDENTITY_COMPOSED.md'));
  assert.match(d.first_reply_before_tools,/persistent/);assert.equal(d.memories.memories.length,0);db.close();
 });
 test('canon summary-first, raw fallback, exact evidence ID',async()=>{

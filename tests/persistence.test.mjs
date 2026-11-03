@@ -13,8 +13,11 @@ test('generated migration persists across reopen, preserves persona, and isolate
   db=open(join(dir,'private.sqlite'));db.native.exec(readFileSync(new URL('../drizzle/0000_abnormal_mister_fear.sql',import.meta.url),'utf8'));
   let engine=createEngine({db,owner:'test-owner',personaDocs});
   const status=await engine.call('elaina_status',{});assert.equal(status.corpus_ready,false);
-  const bootstrap=await engine.call('bootstrap_elaina',{});assert.equal(bootstrap.persona_documents.length,4);
-  for(const [name,content] of Object.entries(personaDocs))assert.equal(content,readFileSync(new URL('../persona/'+name,import.meta.url),'utf8'));
+  const bootstrap=await engine.call('bootstrap_elaina',{});assert.equal(bootstrap.persona_documents.length,7);
+  for(const [name,content] of Object.entries(personaDocs)){
+   const source=name==='SKILL.md'?new URL('../docs/from-skill/SKILL.md',import.meta.url):new URL('../persona/'+name,import.meta.url);
+   assert.equal(content,readFileSync(source,'utf8'));
+  }
   const saved=await engine.call('remember_memory',{key:'synthetic_test',content:'Synthetic integration test only',category:'project',source_quote:'Store this synthetic test record',consent:'user_requested'});
   db.native.close();db=open(join(dir,'private.sqlite'));
   engine=createEngine({db,owner:'test-owner',personaDocs});assert.equal((await engine.call('recall_memory',{})).memories[0].id,saved.memory.id);
