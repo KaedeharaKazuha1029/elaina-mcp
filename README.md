@@ -2,7 +2,7 @@
 
 基于 [elaina-skill](https://github.com/KaedeharaKazuha1029/elaina-skill) 的完整伊蕾娜 MCP 服务源码，适配 ChatGPT Sites / Cloudflare Workers、D1 和 R2。
 
-公开仓库提供可审查的实现、与 OpenClaw 对齐的完整 skill 注入集（`AGENTS.md`、四份 openclaw 人格文档、完整 `SKILL.md`）、数据库迁移、测试、完整语料清单与清单生成器及完整 Python 参考实现。小说原文、摘要正文、SQLite 语料库、对话记忆、部署凭据和密钥不随本仓库公开；获授权的语料由部署者另行导入私有 D1/R2。
+公开仓库提供可审查的实现、与 OpenClaw 对齐的完整 skill 注入集（`AGENTS.md`、四份 openclaw 人格文档、完整 `SKILL.md`）、数据库迁移、测试、**完整 296 篇原文与 296 篇摘要**、`memory/` 索引、`references/` 协议文档，以及完整语料清单与清单生成器。对话记忆、部署凭据和密钥不随本仓库公开；获授权的用户对话记忆仍由部署者写入私有 D1。
 
 本仓库现已包含实际部署使用的完整 `src/corpus-manifest.json`，锁定上游提交，列出 601 个文件和 960 条索引记录，包含完整路径、哈希、存储键、别名和来源映射。运行时与导入器直接使用此清单，无需替换模板；存储键是对象标识，不是访问凭据。清单中的路径均为语料库相对路径，源根目录已是 `<skill-root>` 占位符；不包含个人信息、聊天记忆或密钥。
 
@@ -41,7 +41,6 @@
 - 无状态 HTTP JSON-RPC MCP，入口 `POST /mcp`。
 - 原 Python 排名逻辑移植至 JavaScript，并进行差分验证；Python 代码另行保留，不声称 Workers 执行 Python。
 
-人格指令受宿主规则约束；MCP 本身不会永久修改 ChatGPT 的系统指令，也无法撤回已生成的回复。
 
 ## 快速检查
 
@@ -66,14 +65,14 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 - 全部原文可由索引片段完整重建；全部文件上传后读回验证 SHA-256。
 - 11 项 Node 测试及 1 项 Python 测试通过；28 组检索与原 Python 程序一致。
 
-该记录描述已完成的私有部署；克隆这个公开仓库不会自动获得语料或私人记忆。上游清单中 592 个旧哈希已通过实际文件重新校验，原清单原件在私有存储中保留。
+该记录描述已完成的私有部署验证；本仓库 git 树内现已包含与上游锁定提交一致的完整语料，克隆后可直接用于本地测试或再导入 R2/D1。上游清单中 592 个旧哈希已通过实际文件重新校验，原清单原件在私有存储中保留。
 
 ## 部署与导入
 
 详见 [部署指南](docs/DEPLOYMENT.md) 与 [语料审计](docs/CORPUS_AUDIT.md)。`.openai/hosting.json` 是通用模板，没有个人 Site 的 `project_id`；创建新 Site 时持久化平台返回的真实 ID。保持站点所有者私有访问。
 
-临时语料导入器在 `src/corpus-import.mjs` 中保留，最终服务不暴露导入路由。导入及验证完成后，移除临时路由和导入密钥。语料、秘密及运行数据不应提交到公开 Git。
+临时语料导入器在 `src/corpus-import.mjs` 中保留，最终服务不暴露导入路由。导入及验证完成后，移除临时路由和导入密钥。部署秘密及运行数据不应提交到公开 Git（语料正文已按所有者要求纳入仓库）。
 
 ## 许可证
 
-MCP 适配实现及沿用的上游代码按 **AGPL-3.0-only** 发布；完整许可证见 [LICENSE](LICENSE)，来源说明见 [reference/NOTICE.md](reference/NOTICE.md)。依赖与保留模板适用各自许可证。软件许可证不授权第三方小说正文或角色素材的再分发。
+MCP 适配实现及沿用的上游代码按 **AGPL-3.0-only** 发布；完整许可证见 [LICENSE](LICENSE)，来源说明见 [reference/NOTICE.md](reference/NOTICE.md)。依赖与保留模板适用各自许可证。
