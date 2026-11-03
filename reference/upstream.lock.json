@@ -2,7 +2,7 @@
   "repository": "https://github.com/KaedeharaKazuha1029/elaina-skill",
   "commit": "b940fe08dec019807644f5bf5497d6299cf77ef6",
   "prepared_date": "2026-10-12",
-  "full_corpus_bundled": false,
+  "full_corpus_bundled": true,
   "files": {
     "assets/openclaw-workspace/IDENTITY.md": {
       "bytes": 733,
