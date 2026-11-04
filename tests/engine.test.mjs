@@ -39,3 +39,24 @@ test('approved save/recall, update CAS, delete and owner isolation',async()=>{
 test('cannot write memory without explicitly asserted consent',async()=>{
  const {engine,db}=make();await assert.rejects(()=>engine.call('remember_memory',{key:'x',content:'private',category:'fact',source_quote:'quoted',consent:'automatic'}));db.close();
 });
+test('memoryless mode exposes no write tools and never persists chat memory',async()=>{
+ const db=testDB();
+ const engine=createEngine({db,owner:'public-anon',personaDocs:docs,memoryless:true});
+ const names=engine.toolList().map(t=>t.name);
+ assert.equal(names.includes('remember_memory'),false);
+ assert.equal(names.includes('update_memory'),false);
+ assert.equal(names.includes('forget_memory'),false);
+ assert.equal(names.includes('recall_memory'),true);
+ assert.equal((await engine.call('recall_memory',{query:'anything'})).total_saved,0);
+ assert.equal((await engine.call('bootstrap_elaina',{})).memories.memories.length,0);
+ const st=await engine.call('elaina_status',{});
+ assert.equal(st.memory_mode,'disabled');
+ assert.equal(st.stored_memories,0);
+ await assert.rejects(()=>engine.call('remember_memory',{key:'x',content:'secret',category:'fact',source_quote:'q',consent:'user_requested'}));
+ // Ensure a parallel private engine on same empty DB still can write (public path must not have written)
+ const privateEngine=createEngine({db,owner:'private-owner',personaDocs:docs,memoryless:false});
+ const saved=await privateEngine.call('remember_memory',{key:'only_private',content:'ok',category:'fact',source_quote:'save',consent:'user_requested'});
+ assert.equal(saved.created,true);
+ assert.equal((await engine.call('recall_memory',{})).total_saved,0);
+ db.close();
+});

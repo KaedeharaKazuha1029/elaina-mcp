@@ -69,6 +69,17 @@ python -m unittest discover -s tests -p 'test_*.py' -v
 
 ## 部署与导入
 
+### ECS 精简运行时：两种可选部署（可并行）
+
+同一仓库、同一 `deploy/ecs/server.mjs`，用环境变量选择：
+
+| 模式 | 说明 | 典型 URL |
+|------|------|----------|
+| **A 私有有记忆（默认）** | Bearer 令牌；可持久保存经授权的用户记忆 | `https://mcp.akiyamamizuki.cn/mcp` |
+| **B 公开无记忆（可选）** | 无令牌；不记录聊天衍生记忆，便于对外分享 | `https://mcp-public.akiyamamizuki.cn/mcp` |
+
+**旧版私有服务不要覆盖**：加 B 时请用独立 systemd 端口与 `ELAINA_DATA_DIR`（见 `deploy/ecs/`）。完整步骤与开关表：[deploy/ecs/README.md](deploy/ecs/README.md)。
+
 详见 [部署指南](docs/DEPLOYMENT.md) 与 [语料审计](docs/CORPUS_AUDIT.md)。`.openai/hosting.json` 是通用模板，没有个人 Site 的 `project_id`；创建新 Site 时持久化平台返回的真实 ID。保持站点所有者私有访问。
 
 临时语料导入器在 `src/corpus-import.mjs` 中保留，最终服务不暴露导入路由。导入及验证完成后，移除临时路由和导入密钥。部署秘密及运行数据不应提交到公开 Git（语料正文已按所有者要求纳入仓库）。

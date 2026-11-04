@@ -45,3 +45,15 @@ MCP 运行路由 `app/mcp/route.ts` 的 `createCorpusStore({db: env.DB, bucket: 
 成功后删除临时导入 route.ts，撤销 CORPUS_IMPORT_TOKEN，重新构建和发布。最终应用只有受保护的主页与 `/mcp` 服务入口。
 
 使用 Sites 返回的原有插件 ID 安装/连接，不重复创建插件。验证实际 `bootstrap_elaina`、`search_canon`、`search_original` 和 `read_evidence` 调用；完整文件读取使用 list_canon_files 和 read_canon_file 分页。无需公开站点即可公开代码仓库。
+
+## ECS 精简运行时（可选双模式）
+
+ChatGPT Sites / Workers 之外，可用仓库内 `deploy/ecs/` 在 Linux（如阿里云 ECS）上跑无状态 HTTP JSON-RPC MCP。
+
+**部署方式为二选一或并行，不是互相覆盖：**
+
+1. **私有有记忆（默认、优先）** — 设置 `ELAINA_BEARER_TOKEN`，不要开 `ELAINA_PUBLIC`。单元：`elaina-mcp.service`。
+2. **公开无记忆（可选）** — `ELAINA_PUBLIC=1` + 独立 `ELAINA_DATA_DIR` + 建议 `ELAINA_MEMORYLESS=1`。单元：`elaina-mcp-public.service`。
+
+两套可共用同一代码目录、**必须**分数据目录与端口。说明、nginx 样例与客户端配置见 [deploy/ecs/README.md](../deploy/ecs/README.md)。
+

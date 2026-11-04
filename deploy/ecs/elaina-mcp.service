@@ -1,0 +1,17 @@
+[Unit]
+Description=Elaina MCP (ECS lean runtime)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/elaina-mcp
+EnvironmentFile=/opt/elaina-mcp/deploy/ecs/elaina.env
+ExecStart=/root/.nvm/versions/node/v24.22.1/bin/node /opt/elaina-mcp/deploy/ecs/server.mjs
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

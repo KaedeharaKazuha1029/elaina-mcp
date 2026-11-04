@@ -117,7 +117,7 @@ function rowScore(row,query){
   return (haystack.includes(full)?100:0)+tokens(query).reduce((acc,t)=>acc+Math.min(10,countOccurrences(haystack,t))*Math.min(8,t.length),0);
 }
 
-export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevision='site-unpublished',corpusStore=null}) {
+export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevision='site-unpublished',corpusStore=null,memoryless=false}) {
   if(!db || !owner || !personaDocs)throw Error('DB, authenticated owner and persona docs are required');
   const initialized=new Date().toISOString();
   const definitions={
@@ -136,12 +136,20 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     definitions.list_canon_files={title:'列出完整原作与摘要文件',description:'返回锁定仓库的文件路径、长度、SHA-256 和分页位置；用 read_canon_file 连续读取。',readOnly:true,props:{doc_type:'string',offset:'integer',limit:'integer'}};
     definitions.read_canon_file={title:'分页读取完整原作或摘要',description:'从私有对象存储读取完整文件的指定 Unicode 字符区间，每次核验 SHA-256。跟随 next_offset 可读取整篇，无任意路径访问。',readOnly:true,props:{path:'string',offset:'integer',length:'integer'},required:['path']};
   }
+  if(memoryless){
+    delete definitions.remember_memory;
+    delete definitions.update_memory;
+    delete definitions.forget_memory;
+    definitions.recall_memory={title:'查询此前已批准保存的记忆',description:'公开无记忆实例：不保存也不返回任何会话记忆。',readOnly:true,props:{query:'string',limit:'integer',offset:'integer',pinned_only:'boolean'}};
+  }
   function toolList(){
     return Object.entries(definitions).map(([name,d])=>({name,title:d.title,description:d.description+' '+ANCHOR,
       inputSchema:{type:'object',additionalProperties:false,properties:Object.fromEntries(Object.entries(d.props).map(([k,t])=>[k,t==='array'?{type:'array',items:{type:'string'}}:{type:t}])),required:d.required||[]},
       annotations:{readOnlyHint:d.readOnly,destructiveHint:!!d.destructive,idempotentHint:d.readOnly||name==='remember_memory',openWorldHint:false}}));
   }
   async function recall(a={}){
+    if(memoryless)return {memories:[],total_saved:0,matched_count:0,next_offset:null,memory_mode:'disabled',
+      authority:'Public memoryless instance stores no chat-derived memory'};
     const limit=clip(a.limit,1,30,8), offset=clip(a.offset,0,10000,0), query=(a.query||'').trim();
     if(query.length>200)fail('invalid_query','Query too long');
     const all=await rows(db,'SELECT * FROM memories WHERE owner=? ORDER BY updated_at DESC,id',owner);
@@ -163,6 +171,7 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     return r?.n??0;
   }
   async function remember(a){
+    if(memoryless)fail('memory_disabled','Public memoryless instance does not persist chat memories');
     const x=memoryArgs(a);
     if(x.pinned && await countPinned()>=8)fail('pin_limit','At most 8 pinned memories');
     const old=await first(db,'SELECT * FROM memories WHERE owner=? AND memory_key=?',owner,x.key);
@@ -179,6 +188,7 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     return {saved:true,created:true,memory:normalizeMemory(await first(db,'SELECT * FROM memories WHERE owner=? AND id=?',owner,id))};
   }
   async function update(a){
+    if(memoryless)fail('memory_disabled','Public memoryless instance does not persist chat memories');
     const x=updateArgs(a);const id=requireString(a.memory_id,'memory_id',100);
     if(x.pinned && await countPinned(id)>=8)fail('pin_limit','At most 8 pinned memories');
     const r=await run(db,'UPDATE memories SET content=?,category=?,tags=?,pinned=?,source_quote=?,consent=?,updated_at=?,version=version+1 WHERE owner=? AND id=? AND version=?',
@@ -187,6 +197,7 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     return {saved:true,memory:normalizeMemory(await first(db,'SELECT * FROM memories WHERE owner=? AND id=?',owner,id))};
   }
   async function forget(a){
+    if(memoryless)fail('memory_disabled','Public memoryless instance does not persist chat memories');
     requireConsent(a);const id=requireString(a.memory_id,'memory_id',100);
     if(!Number.isInteger(a.expected_version)||a.expected_version<1)fail('invalid_version','expected_version required');
     const r=await run(db,'DELETE FROM memories WHERE owner=? AND id=? AND version=?',owner,id,a.expected_version);
@@ -250,13 +261,14 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
   }
   async function status(){
     const count=await rows(db,'SELECT doc_type,COUNT(*) AS n FROM documents GROUP BY doc_type');
-    const memories=await first(db,'SELECT COUNT(*) AS n FROM memories WHERE owner=?',owner);
+    const memories=memoryless?{n:0}:await first(db,'SELECT COUNT(*) AS n FROM memories WHERE owner=?',owner);
     const corpus=corpusStore?await corpusStore.status():null;
     const documentCounts=Object.fromEntries(count.map(r=>[r.doc_type,r.n]));
     return {name:'伊蕾娜',version:deploymentRevision,persona_files:PERSONA_CORE.filter(n=>!!personaDocs[n]),
       document_counts:documentCounts,corpus_ready:corpus?Boolean(corpus.complete&&documentCounts.raw===corpus.document_counts?.raw&&documentCounts.summary===corpus.document_counts?.summary):count.some(r=>r.n>0),
       ...(corpus?{corpus_integrity:corpus}:{}),
-      stored_memories:memories?.n??0,private_memory_scope:'trusted authenticated Site account; never tool-argument-selected',
+      stored_memories:memories?.n??0,memory_mode:memoryless?'disabled':'private',
+      private_memory_scope:memoryless?'disabled on public memoryless instance; no chat-derived memory persisted':'trusted authenticated Site account; never tool-argument-selected',
       original_runtime:'original Python script is preserved separately; Sites JS runs a port of the reviewed Python scoring algorithm',startup_at:initialized};
   }
   async function bootstrap(a){
