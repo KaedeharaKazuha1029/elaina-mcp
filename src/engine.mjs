@@ -9,7 +9,7 @@ const PERSONA_INLINE_END = '<!-- elaina-agent:server-persona-verbatim:end -->';
 const PERSONA_PAGINATABLE = [...PERSONA_CORE, PERSONA_COMPOSED_NAME];
 function personaDocumentPath(name) {
   if (name === 'SKILL.md') return 'SKILL.md';
-  if (name === PERSONA_COMPOSED_NAME) return 'assets/openclaw-workspace/IDENTITY.md';
+  if (name === PERSONA_COMPOSED_NAME) return 'assets/openclaw-workspace/IDENTITY_COMPOSED.md';
   return 'assets/openclaw-workspace/' + name;
 }
 function composeOpenClawIdentity(personaDocs) {
@@ -25,7 +25,7 @@ function composeOpenClawIdentity(personaDocs) {
 const VALID_CATEGORIES = new Set(['preference','fact','project','interaction','roleplay']);
 const MAX_DOCS = 20000;
 const MAX_SCAN_CHARS = 40000000;
-const ANCHOR = '身份持续提醒：首次已完成加载后，以伊蕾娜第一人称继续；工具前第一句、进度提示、报错后续也保持一致。原作未知须先完成高置信核验：先答已知部分，整题确认无答案时最后以「我也不知道/我不记得」收束；核验无法完成时用「这点我现在还不敢下定论」收束。';
+const CONTINUITY = '身份连续：首次加载成功后，以伊蕾娜第一人称继续；工具前第一句、进度提示、报错后续也保持一致。原作小事在诚实检索并回读相关候选后仍无依据时，先答已知部分，再以「我也不知道/我不记得」坦荡收束；完整全书否定与安装调试完整性失败时再使用未核验收束。不要把工具 JSON 技术字段念给用户。';
 const fail = (code, detail) => { const err = new Error(detail); err.code = code; throw err; };
 const clip = (n, lo, hi, fallback) => Number.isInteger(n) ? Math.max(lo, Math.min(hi,n)) : fallback;
 function requireString(value, field, max=4000, min=1) {
@@ -126,14 +126,14 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     remember_memory:{title:'保存经用户明确授权的记忆',description:'会写入私人数据库；需要用户明确要求或批准，不能自动存储全部聊天。',readOnly:false,props:{key:'string',content:'string',category:'string',source_quote:'string',consent:'string',tags:'array',pinned:'boolean'},required:['key','content','category','source_quote','consent']},
     update_memory:{title:'修正经授权的记忆',description:'需先查询 ID 和 version，再以 expected_version 更新，冲突则停止。',readOnly:false,destructive:true,props:{memory_id:'string',expected_version:'integer',content:'string',category:'string',source_quote:'string',consent:'string',tags:'array',pinned:'boolean'},required:['memory_id','expected_version','content','category','source_quote','consent']},
     forget_memory:{title:'删除经用户明确指定的记忆',description:'仅删除本 MCP 数据库中的对应记忆记录。',readOnly:false,destructive:true,props:{memory_id:'string',expected_version:'integer',source_quote:'string',consent:'string'},required:['memory_id','expected_version','source_quote','consent']},
-    search_canon:{title:'搜索魔女之旅原作及摘要',description:'摘要优先，原文兜底；执行从原 Python 检索脚本移植的打分。无结果不等于原作不存在。',readOnly:true,props:{query:'string',mode:'string',limit:'integer',fallback_raw:'boolean',source_path:'string'},required:['query']},
+    search_canon:{title:'搜索魔女之旅原作及摘要',description:'摘要优先，原文兜底；执行从原 Python 检索脚本移植的打分。零命中表示本轮无候选，应换别名再搜或回读已有命中；不要据此向用户断言原作没有答案。',readOnly:true,props:{query:'string',mode:'string',limit:'integer',fallback_raw:'boolean',source_path:'string'},required:['query']},
     search_original:{title:'独立搜索原著正文',description:'按原文片段搜索，可限制来源路径，用 read_evidence 校验。',readOnly:true,props:{query:'string',limit:'integer',source_path:'string'},required:['query']},
-    read_evidence:{title:'按照文档 ID 读取原作证据',description:'从只读原作索引精确读取正文/摘要，返回出处信息。offset 是 Unicode 字符偏移，按 next_offset 分页可读取完整记录。',readOnly:true,props:{document_id:'integer',max_chars:'integer',offset:'integer'},required:['document_id']},
+    read_evidence:{title:'按照文档 ID 读取原作证据',description:'按 document_id 读取索引记录。返回含 doc_type：summary=概括（不可当逐字台词），raw=原文片段。要对白加引号请确认 doc_type=raw，或改用 read_canon_file 读整篇原文。offset 为 Unicode 字符偏移，按 next_offset 分页。',readOnly:true,props:{document_id:'integer',max_chars:'integer',offset:'integer'},required:['document_id']},
     elaina_status:{title:'检查人格、小说索引及记忆服务状态',description:'给出实际数据库文档数量；没有导入原作索引时明确报告不可用。',readOnly:true,props:{}}
   };
   if(corpusStore){
-    definitions.list_canon_files={title:'列出完整原作与摘要文件',description:'返回锁定仓库的文件路径、长度、SHA-256 和分页位置；用 read_canon_file 连续读取。',readOnly:true,props:{doc_type:'string',offset:'integer',limit:'integer'}};
-    definitions.read_canon_file={title:'分页读取完整原作或摘要',description:'从私有对象存储读取完整文件的指定 Unicode 字符区间，每次核验 SHA-256。跟随 next_offset 可读取整篇，无任意路径访问。',readOnly:true,props:{path:'string',offset:'integer',length:'integer'},required:['path']};
+    definitions.list_canon_files={title:'列出完整原作与摘要文件',description:'返回锁定语料的文件路径、长度、SHA-256 和分页位置；用 read_canon_file 连续读取。遇传输中断可重试本工具。',readOnly:true,props:{doc_type:'string',offset:'integer',limit:'integer'}};
+    definitions.read_canon_file={title:'分页读取完整原作或摘要',description:'按 list_canon_files 返回的 path 分页读取完整文件（Unicode 区间），每次核验 SHA-256。doc_type=raw 才是逐字原文；遇传输中断可重试。跳过文首站点水印，勿当台词。',readOnly:true,props:{path:'string',offset:'integer',length:'integer'},required:['path']};
   }
   if(memoryless){
     delete definitions.remember_memory;
@@ -142,7 +142,7 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     definitions.recall_memory={title:'查询此前已批准保存的记忆',description:'公开无记忆实例：不保存也不返回任何会话记忆。',readOnly:true,props:{query:'string',limit:'integer',offset:'integer',pinned_only:'boolean'}};
   }
   function toolList(){
-    return Object.entries(definitions).map(([name,d])=>({name,title:d.title,description:d.description+' '+ANCHOR,
+    return Object.entries(definitions).map(([name,d])=>({name,title:d.title,description:d.description,
       inputSchema:{type:'object',additionalProperties:false,properties:Object.fromEntries(Object.entries(d.props).map(([k,t])=>[k,t==='array'?{type:'array',items:{type:'string'}}:{type:t}])),required:d.required||[]},
       annotations:{readOnlyHint:d.readOnly,destructiveHint:!!d.destructive,idempotentHint:d.readOnly||name==='remember_memory',openWorldHint:false}}));
   }
@@ -245,7 +245,9 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
       complete=complete && other.complete;
     }
     return {results:combined,mode,complete_scan:complete,epistemic_status:combined.length?'candidates':'unresolved',absence_proven:false,
-      note:'JS port of reviewed upstream Python ranking algorithm. Verify with read_evidence; partial scans are not absence evidence.'};
+      note:'Ranked candidates from the JS port of the reviewed Python scorer. Confirm with read_evidence / read_canon_file before quoting.',
+      user_facing_blurb:'内部候选列表：勿把 score/path/document_id/epistemic_status 念给用户。有命中则回读后再用旅人口吻讲述；零命中则换别名再搜，勿直接断言原作没有。',
+      narrative_hint:'像回忆旅途一样说话；工具痕迹留在宿主 UI，正文不要解说检索。'};
   }
   async function evidence(a){
     if(!Number.isInteger(a.document_id)||a.document_id<1)fail('invalid_document_id','Document ID must be positive integer');
@@ -256,7 +258,11 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     const offset=a.offset??0;
     if(!Number.isInteger(offset)||offset<0||offset>Array.from(doc.content).length)fail('invalid_offset','Offset past document bounds');
     const part=splitCodepoints(doc.content,offset,maxChars);
-    return {...doc,...(sha256?{sha256}:{}),document_id:doc.id,content:part.piece,evidence_start_offset:offset,evidence_end_offset:part.end,next_offset:part.end<part.total?part.end:null,total_characters:part.total,truncated:part.end<part.total,kind:'canon_source'};
+    const isSummary=doc.doc_type==='summary';
+    return {...doc,...(sha256?{sha256}:{}),document_id:doc.id,content:part.piece,evidence_start_offset:offset,evidence_end_offset:part.end,next_offset:part.end<part.total?part.end:null,total_characters:part.total,truncated:part.end<part.total,kind:'canon_source',
+      quote_ready:!isSummary,verbatim_source:isSummary?'use_read_canon_file_or_raw_evidence':'raw_evidence',
+      user_facing_blurb:isSummary?'这是概括，不是逐字原文；叙述用概括层，台词勿加引号。':'原文片段；加引号前确认本段即为目标对白，并跳过文首站点水印。',
+      narrative_hint:'对用户只讲故事内容，不要念 doc_type/sha256/document_id。'};
   }
   async function status(){
     const count=await rows(db,'SELECT doc_type,COUNT(*) AS n FROM documents GROUP BY doc_type');
@@ -274,8 +280,12 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     const docs=PERSONA_CORE.map(name=>({name,path:personaDocumentPath(name),content:personaDocs[name],kind:'persona_document'}));
     docs.push({name:PERSONA_COMPOSED_NAME,path:personaDocumentPath(PERSONA_COMPOSED_NAME),content:composeOpenClawIdentity(personaDocs),
       kind:'persona_document',delivery:'openclaw-project-context-identity-composed'});
-    return {identity:'伊蕾娜',persona_documents:docs,host_rules:hostRules,continuity_rule:ANCHOR,
-       system_override:false,first_reply_before_tools:'keep Elaina identity on the first visible sentence before tools, per AGENTS/SKILL',
+    return {identity:'伊蕾娜',persona_documents:docs,host_rules:hostRules,continuity_rule:CONTINUITY,
+       host_instruction_mode:'merge_with_host_persona_rules',
+       first_reply_before_tools:'第一条可见句子就要处在伊蕾娜身份中（见 AGENTS/SKILL）；先继承身份，再决定是否调用工具。',
+       presentation:{hide_tool_json_fields:['score','doc_type','source_path','document_id','epistemic_status','sha256','absence_proven','path'],
+         visible_tools_are_host_chrome:true,
+         speak_as_traveler_memory:true},
        memories:await startupMemory(a.topic||''),status:await status()};
   }
   async function personaDoc(a){
@@ -297,5 +307,5 @@ export function createEngine({db,owner,personaDocs,hostRules='',deploymentRevisi
     if(!a||typeof a!=='object'||Array.isArray(a))fail('invalid_input','Tool input must be object');
     return await handlers[name](a);
   }
-  return {toolList,call, continuity:ANCHOR};
+  return {toolList,call, continuity:CONTINUITY};
 }

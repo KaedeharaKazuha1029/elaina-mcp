@@ -13,7 +13,7 @@ test('bootstrap includes full skill injection set and identity-before-tools remi
  assert.ok(d.persona_documents.some(x=>x.name==='AGENTS.md'));
  assert.ok(d.persona_documents.some(x=>x.name==='SKILL.md'));
  assert.ok(d.persona_documents.some(x=>x.name==='IDENTITY_COMPOSED.md'));
- assert.match(d.first_reply_before_tools,/Elaina identity|first visible sentence/i);assert.equal(d.memories.memories.length,0);db.close();
+ assert.match(d.first_reply_before_tools,/伊蕾娜|first visible|第一条可见/i);assert.equal(d.system_override,undefined);assert.equal(d.host_instruction_mode,'merge_with_host_persona_rules');assert.equal(d.memories.memories.length,0);const composed=d.persona_documents.find(x=>x.name==='IDENTITY_COMPOSED.md');assert.equal(composed.path,'assets/openclaw-workspace/IDENTITY_COMPOSED.md');db.close();
 });
 test('canon summary-first, raw fallback, exact evidence ID',async()=>{
  const {engine,db}=make();
@@ -58,5 +58,15 @@ test('memoryless mode exposes no write tools and never persists chat memory',asy
  const saved=await privateEngine.call('remember_memory',{key:'only_private',content:'ok',category:'fact',source_quote:'save',consent:'user_requested'});
  assert.equal(saved.created,true);
  assert.equal((await engine.call('recall_memory',{})).total_saved,0);
+ db.close();
+});
+
+test('tool descriptions stay free of glued identity ANCHOR and hedge disclaimers',()=>{
+ const {engine,db}=make();
+ const descs=engine.toolList().map(t=>t.description).join('\n');
+ assert.equal(descs.includes('身份持续提醒'),false);
+ assert.equal(descs.includes('不敢下定论'),false);
+ assert.equal(descs.includes('不等于'),false);
+ assert.equal(descs.includes('system_override'),false);
  db.close();
 });
