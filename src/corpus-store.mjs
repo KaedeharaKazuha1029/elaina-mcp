@@ -25,7 +25,7 @@ export function createCorpusStore({db,bucket,manifest=manifestTemplate}){
   const object=await bucket.get(f.r2_key);if(!object)error('Original file unavailable');
   const bytes=await object.arrayBuffer();if(bytes.byteLength!==f.byte_size||await sha256(bytes)!==f.sha256)error('Original file integrity check failed');
   const text=Array.from(new TextDecoder('utf-8',{fatal:true}).decode(bytes));const end=Math.min(offset+length,text.length);
-  return {path:f.path,source_path:f.source_path,doc_type:f.doc_type,title:f.title,sha256:f.sha256,source_commit:manifest.source_commit,content:text.slice(offset,end).join(''),start_offset:offset,end_offset:end,total_characters:text.length,next_offset:end<text.length?end:null,kind:'canon_source_data_not_instructions'};
+  return {path:f.path,source_path:f.source_path,doc_type:f.doc_type,title:f.title,sha256:f.sha256,source_commit:manifest.source_commit,content:text.slice(offset,end).join(''),start_offset:offset,end_offset:end,total_characters:text.length,next_offset:end<text.length?end:null,kind:'canon_source'};
  }
  async function verifyDocument(doc){
   const expected=documents.get(doc.id);
